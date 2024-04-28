@@ -1,85 +1,105 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
+import {RouterLink, RouterView} from 'vue-router'
+import {useUserStore} from "@/stores/user";
+import {inject, reactive, ref} from "vue";
+import type {User} from "@/persistence/Schema";
+import {storeToRefs} from "pinia";
+
+const mongo = <Realm.Services.MongoDBDatabase>inject("mongo")
+let userStore = storeToRefs(useUserStore())
+
+
+let userName = ref("")
+let password = ref("")
+let email = ref("")
+let firstName = ref("")
+let lastName = ref("")
+let registerView = ref(false)
+
+async function login() {
+  userStore.user.value = (await mongo.collection('User').findOne({
+    email: email.value,
+    password: password.value
+  }))._id.toString()
+}
+
+async function register() {
+  await mongo.collection<User>('User').insertOne({
+    email: email.value,
+    firstName: firstName.value,
+    lastName: lastName.value,
+    userName: userName.value,
+    password: password.value,
+  })
+  await login()
+}
+
+function switchRegisterLogin() {
+  registerView.value = !registerView.value
+}
+
 </script>
 
 <template>
   <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
+    <div class="nav">
+      <router-link class="nav-link" to="/">Home</router-link>
+      <router-link to="/create">Create</router-link>
     </div>
   </header>
 
-  <RouterView />
+  <Dialog :visible="userStore.user.value == ''" modal :closable="false" :header="registerView ? 'Register' : 'Login'"
+          :style="{ width: '35rem' }">
+    <div v-if="registerView" class="field">
+      <label for="firstName">First Name</label>
+      <InputText id="firstname" autocomplete="off" v-model="firstName"/>
+    </div>
+    <div v-if="registerView" class="field">
+      <label for="lastName">Last Name</label>
+      <InputText id="lastName" autocomplete="off" v-model="lastName"/>
+    </div>
+    <div v-if="registerView" class="field">
+      <label for="username">Username</label>
+      <InputText id="username" autocomplete="off" v-model="userName"/>
+    </div>
+    <div class="field">
+      <label for="email">E-mail</label>
+      <InputText id="email" autocomplete="off" v-model="email"/>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <Password id="password" :feedback="false" autocomplete="off" v-model="password"/>
+    </div>
+    <div class="field">
+      <Button type="button" :label="registerView ? 'Register' : 'Login'"
+              @click="registerView ? register() : login()"></Button>
+      <Button type="button" :label="registerView ? 'I Already have an Account' : 'Create an Account'"
+              @click="switchRegisterLogin()" link></Button>
+    </div>
+  </Dialog>
+
+  <RouterView/>
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 3vh 0;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+.nav-link {
+  margin: 0 1vw;
 }
 
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
+.field {
+  margin: 2vh;
+  display: flex;
 }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
-
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
+input, #password {
+  align-self: end;
+  margin-left: auto;
 }
 </style>
