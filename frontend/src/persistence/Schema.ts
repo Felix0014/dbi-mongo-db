@@ -1,11 +1,11 @@
+import Realm from 'realm-web'
+
 export interface Entity {
-    _id: string
-    createdAt?: Date
+    _id: Realm.BSON.ObjectId
 }
 
 export interface User extends Entity {
     email: string
-    _id: string
     firstName: string
     lastName: string
     userName: string
@@ -15,14 +15,18 @@ export interface User extends Entity {
 
 export interface Post extends Entity {
     title: string
-    content: string
-    authorId: string
+    author: string
+    description: string
+    creationDate: Date
+    editDates?: Date[]
+    impressionCount: Realm.BSON.Long
+    content?: { type: string, value: any }[]
     categories?: string[]
-    customFields?: { name: string, value: any }[]
+    commentsAllowed: boolean
 }
 
 export interface Comment extends Entity {
     content: string
-    authorId: string
-    postId: string
+    parent: Realm.BSON.ObjectId
+    author: Realm.BSON.ObjectId
 }
