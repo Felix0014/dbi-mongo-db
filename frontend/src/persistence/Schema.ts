@@ -15,7 +15,7 @@ export interface User extends Entity {
 
 export interface Post extends Entity {
     title: string
-    author: string
+    author: Realm.BSON.ObjectId
     description: string
     creationDate: Date
     editDates?: Date[]

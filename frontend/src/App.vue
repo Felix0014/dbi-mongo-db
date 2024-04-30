@@ -6,8 +6,9 @@ import type {User} from "@/persistence/Schema";
 import {storeToRefs} from "pinia";
 
 const mongo = <Realm.Services.MongoDBDatabase>inject("mongo")
-let userStore = storeToRefs(useUserStore())
-
+const userStore = useUserStore()
+const {currentUser} = storeToRefs(userStore)
+const {set, logout} = userStore
 
 let userName = ref("")
 let password = ref("")
@@ -17,10 +18,10 @@ let lastName = ref("")
 let registerView = ref(false)
 
 async function login() {
-  userStore.user.value = (await mongo.collection('User').findOne({
+  set((await mongo.collection('User').findOne({
     email: email.value,
     password: password.value
-  }))._id.toString()
+  }))._id.toString())
 }
 
 async function register() {
@@ -48,7 +49,8 @@ function switchRegisterLogin() {
     </div>
   </header>
 
-  <Dialog :visible="userStore.user.value == ''" modal :closable="false" :header="registerView ? 'Register' : 'Login'"
+  <Dialog :visible="currentUser == '' || currentUser == null" modal :closable="false"
+          :header="registerView ? 'Register' : 'Login'"
           :style="{ width: '35rem' }">
     <div v-if="registerView" class="field">
       <label for="firstName">First Name</label>

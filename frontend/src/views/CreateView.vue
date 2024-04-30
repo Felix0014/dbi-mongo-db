@@ -11,7 +11,10 @@ const mongo = <Realm.Services.MongoDBDatabase>inject('mongo')
 console.log(inject('test'))
 
 let availableTypes = ["link", "image", "location", "text"]
-let userStore = storeToRefs(useUserStore())
+
+const userStore = useUserStore()
+const {currentUser} = storeToRefs(userStore)
+const {set, logout} = userStore
 
 let title = ref("")
 let categories = ref<string[]>([])
@@ -24,7 +27,7 @@ let commentsAllowed = ref(true)
 async function submit() {
   await mongo.collection<Post>("Post").insertOne({
     title: title.value,
-    author: new Realm.BSON.ObjectId(userStore.user.value),
+    author: new Realm.BSON.ObjectId(<string>currentUser.value),
     description: description.value,
     creationDate: new Date(),
     impressionCount: 0,
